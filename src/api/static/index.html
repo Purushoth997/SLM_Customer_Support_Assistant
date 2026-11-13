@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Retail Solutions — Customer Support Assistant</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1d4ed8;
+      --accent: #0284c7;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --user-msg: #1e3a8a;
+      --bot-msg: #f1f5f9;
+      --status-online: #16a34a;
+      --status-warn: #eab308;
+      --status-err: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Header */
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .brand-title h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-err);
+    }
+
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-clear:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    /* Main Chat Layout */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    /* Alert Banner */
+    .alert-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    /* Message History Stream */
+    .chat-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .message-row.assistant {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .bubble-sender {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      padding: 0 4px;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .message-row.user .bubble {
+      background: var(--user-msg);
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+
+    .message-row.assistant .bubble {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 2px;
+    }
+
+    .bubble-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      padding: 0 4px;
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Typing Loading Indicator */
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 12px 18px;
+      border-radius: 12px;
+      border-bottom-left-radius: 2px;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* Quick Prompts Bar */
+    .quick-prompts {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 0;
+      scrollbar-width: none;
+    }
+
+    .quick-prompts::-webkit-scrollbar {
+      display: none;
+    }
+
+    .prompt-chip {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .prompt-chip:hover {
+      border-color: var(--accent);
+      background: #f0f9ff;
+      color: var(--primary);
+    }
+
+    /* Input Card */
+    .input-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .context-toggle {
+      font-size: 11px;
+      color: var(--accent);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+      user-select: none;
+    }
+
+    .context-drawer {
+      display: none;
+      margin-top: 4px;
+    }
+
+    .context-drawer textarea {
+      width: 100%;
+      height: 50px;
+      padding: 6px 8px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      resize: vertical;
+      color: var(--text);
+      background: #fafafa;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .input-box textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      resize: none;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .input-box textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+    }
+
+    .btn-send {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-send:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-send:disabled {
+      background: var(--border);
+      cursor: not-allowed;
+    }
+
+    .btn-send svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .input-footer {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div class="brand-title">
+        <h1>Apex Retail Solutions</h1>
+        <p>Customer Support Assistant (Qwen2.5-1.5B + PEFT LoRA)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Checking...</span>
+      </div>
+      <button class="btn-clear" id="btnClear" title="Clear Conversation">Clear Chat</button>
+    </div>
+  </header>
+
+  <!-- Main Chat Area -->
+  <main>
+    <!-- System Diagnostic Banner -->
+    <div class="alert-banner" id="alertBanner"></div>
+
+    <!-- Chat Message History -->
+    <div class="chat-stream" id="chatStream">
+      <div class="message-row assistant">
+        <span class="bubble-sender">ApexSupport</span>
+        <div class="bubble">
+          Hello! Welcome to Apex Retail Solutions Customer Support. I am your AI assistant fine-tuned to assist with order tracking, shipping policies, returns, refunds, payment questions, and technical specifications. How can I assist you today?
+        </div>
+        <div class="bubble-meta">Policy-grounded · Confidential</div>
+      </div>
+    </div>
+
+    <!-- Typing Loading Indicator -->
+    <div class="typing-indicator" id="typingIndicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+
+    <!-- Quick Prompt Suggestions -->
+    <div class="quick-prompts">
+      <button class="prompt-chip" data-prompt="What is your return policy for open-box electronics?">Return Policy</button>
+      <button class="prompt-chip" data-prompt="Can I split my payment across two different credit cards?">Split Tender</button>
+      <button class="prompt-chip" data-prompt="How long does it take for a refund to post back to my debit card?">Refund Timelines</button>
+      <button class="prompt-chip" data-prompt="My order has been delayed at the regional distribution center. What should I do?">Order Delay</button>
+      <button class="prompt-chip" data-prompt="I need to speak directly with a human supervisor regarding a damaged package.">Supervisor Escalation</button>
+    </div>
+
+    <!-- Input Card -->
+    <div class="input-card">
+      <div class="context-toggle" id="contextToggle">
+        <span>+ Add Order Details / Policy Context</span>
+      </div>
+      <div class="context-drawer" id="contextDrawer">
+        <textarea id="contextInput" placeholder="Optional business context (e.g., Order #APX-98234, purchased 5 days ago, damaged box)..."></textarea>
+      </div>
+
+      <div class="input-box">
+        <textarea id="messageInput" placeholder="Type your customer inquiry here... (Enter to send, Shift+Enter for new line)" rows="1"></textarea>
+        <button class="btn-send" id="btnSend" title="Send message">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+
+      <div class="input-footer">
+        <span>Grounded in Apex retail policies & catalog specs</span>
+        <span id="charCount">0 / 2000</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // State management
+    const state = {
+      history: [],
+      modelReady: false,
+      isGenerating: false,
+    };
+
+    // DOM Elements
+    const chatStream = document.getElementById("chatStream");
+    const messageInput = document.getElementById("messageInput");
+    const contextInput = document.getElementById("contextInput");
+    const btnSend = document.getElementById("btnSend");
+    const btnClear = document.getElementById("btnClear");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const statusBadge = document.getElementById("statusBadge");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const alertBanner = document.getElementById("alertBanner");
+    const contextToggle = document.getElementById("contextToggle");
+    const contextDrawer = document.getElementById("contextDrawer");
+    const charCount = document.getElementById("charCount");
+
+    // Context Drawer Toggle
+    contextToggle.addEventListener("click", () => {
+      const isVisible = contextDrawer.style.display === "block";
+      contextDrawer.style.display = isVisible ? "none" : "block";
+      contextToggle.querySelector("span").textContent = isVisible
+        ? "+ Add Order Details / Policy Context"
+        : "- Hide Order Details / Policy Context";
+    });
+
+    // Character counter
+    messageInput.addEventListener("input", () => {
+      const len = messageInput.value.length;
+      charCount.textContent = `${len} / 2000`;
+      if (len > 2000) {
+        charCount.style.color = "var(--status-err)";
+      } else {
+        charCount.style.color = "var(--text-muted)";
+      }
+
+      // Auto-resize textarea
+      messageInput.style.height = "auto";
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + "px";
+    });
+
+    // Keydown handler (Enter to send, Shift+Enter for newline)
+    messageInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    btnSend.addEventListener("click", sendMessage);
+
+    // Quick prompt buttons
+    document.querySelectorAll(".prompt-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        messageInput.value = chip.getAttribute("data-prompt");
+        messageInput.focus();
+        messageInput.dispatchEvent(new Event("input"));
+      });
+    });
+
+    // Clear chat handler
+    btnClear.addEventListener("click", () => {
+      if (confirm("Clear conversation history?")) {
+        state.history = [];
+        chatStream.innerHTML = `
+          <div class="message-row assistant">
+            <span class="bubble-sender">ApexSupport</span>
+            <div class="bubble">
+              Conversation cleared. How can I assist you with Apex Retail Solutions products or services?
+            </div>
+            <div class="bubble-meta">Policy-grounded · Clean Session</div>
+          </div>
+        `;
+      }
+    });
+
+    // Check backend health & model readiness
+    async function checkHealth() {
+      try {
+        const res = await fetch("/health");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (data.status === "healthy" && data.model_loaded && data.adapter_loaded) {
+          statusDot.style.background = "var(--status-online)";
+          statusText.textContent = "Online (LoRA Active)";
+          state.modelReady = true;
+          alertBanner.style.display = "none";
+        } else if (data.status === "weights_missing" || !data.adapter_loaded) {
+          statusDot.style.background = "var(--status-warn)";
+          statusText.textContent = "Weights Missing";
+          state.modelReady = false;
+          alertBanner.style.display = "block";
+          alertBanner.innerHTML = `
+            <strong>Model Assets Required:</strong> The Hugging Face base model or customer-support-lora adapter has not been loaded.
+            Please download the base model and place the verified adapter in <code>exports/customer-support-lora/</code>.
+          `;
+        } else {
+          statusDot.style.background = "var(--status-warn)";
+          statusText.textContent = data.status || "Degraded";
+          state.modelReady = false;
+        }
+      } catch (err) {
+        statusDot.style.background = "var(--status-err)";
+        statusText.textContent = "Disconnected";
+        state.modelReady = false;
+        alertBanner.style.display = "block";
+        alertBanner.innerHTML = `
+          <strong>Connection Error:</strong> Cannot connect to FastAPI backend at <code>${window.location.origin}</code>. Ensure the server is running.
+        `;
+      }
+    }
+
+    // Append chat message to UI
+    function appendMessage(role, text, meta = null) {
+      const row = document.createElement("div");
+      row.className = `message-row ${role}`;
+
+      const sender = document.createElement("span");
+      sender.className = "bubble-sender";
+      sender.textContent = role === "user" ? "Customer" : "ApexSupport";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+
+      row.appendChild(sender);
+      row.appendChild(bubble);
+
+      if (meta) {
+        const metaSpan = document.createElement("div");
+        metaSpan.className = "bubble-meta";
+        metaSpan.textContent = meta;
+        row.appendChild(metaSpan);
+      }
+
+      chatStream.appendChild(row);
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    // Send Message
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      const context = contextInput.value.trim();
+
+      if (!message || state.isGenerating) return;
+
+      // Add to UI
+      appendMessage("user", message);
+      messageInput.value = "";
+      messageInput.style.height = "auto";
+      charCount.textContent = "0 / 2000";
+
+      // Append to history state
+      state.history.push({ role: "user", content: message });
+
+      // Show typing indicator
+      state.isGenerating = true;
+      btnSend.disabled = true;
+      typingIndicator.style.display = "flex";
+      chatStream.scrollTop = chatStream.scrollHeight;
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: message,
+            context: context || null,
+            history: state.history.slice(-6), // Send last 6 turns for context
+          }),
+        });
+
+        const data = await res.json();
+        typingIndicator.style.display = "none";
+
+        if (data.success) {
+          const metaStr = `${data.completion_tokens || 0} tokens · ${data.latency_seconds || 0}s · ${data.tokens_per_second || 0} tok/s`;
+          appendMessage("assistant", data.answer, metaStr);
+          state.history.push({ role: "assistant", content: data.answer });
+        } else {
+          appendMessage(
+            "assistant",
+            data.answer || "An error occurred.",
+            `Error: ${data.error || "Unknown"}`
+          );
+        }
+      } catch (err) {
+        typingIndicator.style.display = "none";
+        appendMessage(
+          "assistant",
+          "Unable to communicate with the support backend. Please verify your connection.",
+          err.message
+        );
+      } finally {
+        state.isGenerating = false;
+        btnSend.disabled = false;
+        messageInput.focus();
+      }
+    }
+
+    // Initial check and periodic polling
+    checkHealth();
+    setInterval(checkHealth, 10000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# ==============================================================================
+# SLM Customer Support Assistant — Cloud GPU QLoRA Training Dependencies
+# Target Runtime: Google Colab Free (Linux x86_64, NVIDIA T4, CUDA 12.x, Python 3.10–3.12)
+#
+# IMPORTANT:
+# - DO NOT install this file into the local Windows CPU virtual environment (venv).
+# - Local CPU inference uses `requirements.txt` ONLY.
+# - `trl` is intentionally omitted because completion-only ChatML masking is
+#   implemented deterministically in `src/data/qlora_collator.py` with `transformers.Trainer`.
+# ==============================================================================
+
+# Core Deep Learning Framework (Linux x86_64 CUDA 12.4 wheel on PyPI; pre-installed on Colab)
+torch==2.5.1
+
+# Hugging Face Ecosystem & Parameter-Efficient Fine-Tuning
+transformers==4.48.3
+peft==0.14.0
+accelerate==1.3.0
+datasets==3.2.0
+safetensors==0.5.2
+huggingface-hub==0.28.1
+
+# 4-Bit NF4 Quantization Backend (Requires CUDA GPU >= sm_70)
+bitsandbytes==0.45.3
+
+# Configuration Serialization
+pyyaml==6.0.2

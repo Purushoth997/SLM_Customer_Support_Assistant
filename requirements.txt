@@ -1,0 +1,31 @@
+# ==============================================================================
+# SLM Customer Support Assistant - Production & Runtime Dependencies
+# Python Target: 3.11.9 (Windows x86_64, CPU Inference)
+# ==============================================================================
+
+# Fast API Backend & Server
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+jinja2==3.1.5
+
+# Configuration & Hardware Telemetry
+pyyaml==6.0.2
+psutil==6.1.1
+
+# Data Pipeline & Science
+pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.6.1
+
+# Automated Testing & HTTP Client
+pytest==8.3.4
+httpx==0.28.1
+rouge-score==0.1.2
+
+# Model Artifact Management
+huggingface-hub==0.28.1
+
+# CPU-Only LLM Inference Engine (Precompiled Windows AVX2 wheel)
+# Install via: pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python==0.3.7

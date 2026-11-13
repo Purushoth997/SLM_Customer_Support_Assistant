@@ -1,0 +1,79 @@
+# ==============================================================================
+# Git Ignore Configuration - SLM Customer Support Assistant
+# ==============================================================================
+
+# Python Environments
+/venv/
+/env/
+/.venv/
+/ENV/
+/venv-peft/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Model Weights, Binaries & Quantized Checkpoints (Never commit heavy binary models)
+/models/
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.onnx
+/exports/**/*.safetensors
+
+# Downloaded Model Caches
+/.cache/
+/huggingface_cache/
+
+# Checkpoints & Fine-Tuning Artifacts
+/experiments/
+experiments/checkpoints/
+experiments/*.bin
+experiments/*.safetensors
+*.h5
+*.ckpt
+
+# Datasets, Splits & Quarantined Holdout Records (Never commit dataset records)
+/data/
+/data/raw/
+/data/processed/
+/data/splits/
+data/splits/test.json
+
+# Exported Evaluation Archives, Predictions & Adapter Weights
+/exports/
+
+# Intermediate Development Reports (Curated mentor package in reports/phase10g_final_submission/)
+/reports/*.md
+!/reports/phase10g_final_submission/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+
+# Temporary, Logs, Backups & OS Files
+*.tmp
+*.log
+*.bak
+scratch/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

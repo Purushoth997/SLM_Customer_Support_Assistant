@@ -1,0 +1,88 @@
+# ==============================================================================
+# Fine-Tuning Configuration (Conservative LoRA / QLoRA — Phase 6 Approved)
+# Target Environment: Google Colab Free (NVIDIA T4) / Compatible Cloud GPU
+# Original Phase 2 backup preserved at: configs/training_config.yaml.bak
+# ==============================================================================
+
+base_model:
+  repo_id: "Qwen/Qwen2.5-1.5B-Instruct"
+  architecture: "Qwen2ForCausalLM"
+  license: "Apache-2.0"
+  format: "Hugging Face safetensors"
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_use_double_quant: true
+  # Dynamic precision selection:
+  # - NVIDIA T4 (sm_75): FP16 compute + FP16 GradScaler (bf16=False, fp16=True)
+  # - Ampere+ (sm_80+ with native BF16): BF16 compute (bf16=True, fp16=False)
+  # Never combines BF16 compute with FP16 GradScaler.
+  precision_mode: "auto"
+
+lora:
+  r: 8
+  lora_alpha: 16
+  lora_dropout: 0.10
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+datasets:
+  train_path: "data/splits/train.json"
+  validation_path: "data/splits/validation.json"
+  # Strict quarantine: held-out test split is intentionally excluded from training config.
+
+tokenization:
+  pad_token: "<|endoftext|>"
+  eos_token: "<|im_end|>"
+  assistant_header: "<|im_start|>assistant\n"
+  completion_only_loss: true
+  ignore_index: -100
+
+training_hyperparameters:
+  output_dir: "./experiments/checkpoints"
+  adapter_output_dir: "./models/customer-support-lora"
+  training_log_path: "./experiments/training_log.json"
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4      # Effective batch size = 4 * 4 = 16
+  learning_rate: 0.0001               # 1e-4 conservative learning rate
+  weight_decay: 0.01
+  num_train_epochs: 3
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.10
+  logging_steps: 4
+  save_strategy: "steps"
+  save_steps: 8
+  save_total_limit: 3
+  eval_strategy: "steps"
+  eval_steps: 8
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  early_stopping_patience: 2
+  max_seq_length: 512
+  gradient_checkpointing: true
+  optim: "paged_adamw_8bit"
+  seed: 42
+
+export:
+  merged_model_dir: "./models/qwen2.5-1.5b-customer-support-merged-hf"
+  gguf_output_path: "./models/qwen2.5-1.5b-customer-support-q4_k_m.gguf"
+  quantization_type: "Q4_K_M"
+  baseline_gguf_path: "./models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+  allow_overwrite_existing_gguf: false
+  llama_cpp_repo_url: "https://github.com/ggml-org/llama.cpp.git"
+  llama_cpp_commit: "74d73dc85cc2057446bf63cc37ff649ae7cebd80"  # Tag b4094 (matches llama-cpp-python==0.3.2)
+
+execution_environment:
+  target_runtime: "Google Colab Free (NVIDIA T4)"
+  min_gpu_vram_gb: 8
+  min_compute_capability: 7.0
+  local_cpu_training_allowed: false   # Disallowed locally due to lack of discrete NVIDIA GPU

@@ -1,0 +1,23 @@
+# ==============================================================================
+# Evaluation Configuration
+# ==============================================================================
+
+datasets:
+  test_split_path: "data/splits/test.json"
+  validation_split_path: "data/splits/validation.json"
+
+benchmark_metrics:
+  - "category_accuracy"
+  - "exact_match_score"
+  - "token_f1_score"
+  - "response_validity_rate"
+  - "escalation_accuracy"
+  - "latency_seconds_per_query"
+  - "tokens_per_second"
+  - "peak_ram_mb"
+
+output_paths:
+  baseline_results_json: "experiments/baseline_results.json"
+  baseline_report_md: "reports/baseline_evaluation.md"
+  final_results_json: "experiments/final_results.json"
+  final_report_md: "reports/final_evaluation.md"

@@ -1,0 +1,57 @@
+# ==============================================================================
+# Customer Support Dataset Configuration
+# ==============================================================================
+
+generation:
+  target_total_records: 350
+  records_per_category: 35
+  random_seed: 42
+  fictional_company: "Apex Retail Solutions"
+  id_prefix: "CS"
+
+categories:
+  - "order_status"
+  - "shipping_delivery"
+  - "payment_issues"
+  - "refund_requests"
+  - "return_policies"
+  - "product_information"
+  - "account_support"
+  - "customer_complaints"
+  - "escalation_requests"
+  - "general_support"
+
+difficulties:
+  - "easy"
+  - "medium"
+  - "hard"
+
+splits:
+  train_ratio: 0.70
+  validation_ratio: 0.15
+  test_ratio: 0.15
+  random_seed: 42
+  stratify_by: "category"
+
+paths:
+  raw_dataset: "data/raw/customer_support_dataset.json"
+  cleaned_dataset: "data/processed/cleaned_dataset.json"
+  train_split: "data/splits/train.json"
+  validation_split: "data/splits/validation.json"
+  test_split: "data/splits/test.json"
+  dataset_report: "reports/dataset_report.md"
+  data_quality_report: "reports/data_quality_report.md"
+
+validation_rules:
+  required_fields:
+    - "id"
+    - "category"
+    - "question"
+    - "context"
+    - "expected_answer"
+    - "requires_escalation"
+    - "difficulty"
+  min_question_length: 5
+  min_answer_length: 10
+  max_question_length: 600
+  max_answer_length: 1200
